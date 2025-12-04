@@ -34,7 +34,8 @@ if __name__ == "__main__":
 
     with open("input.txt", "r", encoding="utf-8", errors="ignore") as f:
         lineno = 0
-        multiple_line_comment_open = False
+        multiple_line_comment_open = None
+        multiple_line_comment_string = ""
         for line in f:
             line_tokens = []
             lineno += 1
@@ -54,10 +55,11 @@ if __name__ == "__main__":
                     look_ahead = '\n'
 
                 #comment handling
-                if multiple_line_comment_open:
+                if multiple_line_comment_open != None:
                     if (line[idx] != '*' or line[idx + 1] != '/'):
+                        multiple_line_comment_string += line[idx]
                         continue
-                    multiple_line_comment_open = False
+                    multiple_line_comment_open = None
                     current_token_start = idx + 2
                     idx += 1
                     continue
@@ -93,7 +95,7 @@ if __name__ == "__main__":
                         current_line_comment_open = True
                         break
                     if line[idx] == '/' and look_ahead == '*':
-                        multiple_line_comment_open = True
+                        multiple_line_comment_open = lineno
                         current_token_start = idx + 2
                         idx += 1
                         continue
@@ -199,6 +201,20 @@ if __name__ == "__main__":
                 token = line[current_token_start:line_length]
                 line_tokens.append({token: "NUM"})            
             tokens.append((lineno, line_tokens))
+
+            if multiple_line_comment_open != None:
+                multiple_line_comment_string += "\n"
+
+if multiple_line_comment_open != None:
+    lexical_errors.append({
+        "line": multiple_line_comment_open,
+        "start_idx": None,
+        "string": "/*" + multiple_line_comment_string,
+        "type": "Open comment at EOF"
+    })
+    if len(multiple_line_comment_string) > 8:
+        lexical_errors[-1]["string"] = "/*" + multiple_line_comment_string[:4] + "..." 
+
 
 with open("tokens.txt", "w", encoding="utf-8", errors="ignore") as f:
     for lineno, line_tokens in tokens:
