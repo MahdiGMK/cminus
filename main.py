@@ -60,6 +60,7 @@ if __name__ == "__main__":
                         multiple_line_comment_string += line[idx]
                         continue
                     multiple_line_comment_open = None
+                    multiple_line_comment_string = ""
                     current_token_start = idx + 2
                     idx += 1
                     continue
