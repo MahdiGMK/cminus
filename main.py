@@ -15,6 +15,7 @@ def is_Keyword(s: str) -> bool:
 if __name__ == "__main__":
     # Open file
     tokens = []
+    symbol_table = ["if", "else", "void", "int", "for", "break", "return"]
     with open("input.txt", "r", encoding="utf-8", errors="ignore") as f:
         lineno = 0
         multiple_line_comment_open = False
@@ -86,6 +87,8 @@ if __name__ == "__main__":
                                 line_tokens.append({token: "KEYWORD"})
                             else:
                                 line_tokens.append({token: "ID"})
+                                if token not in symbol_table:
+                                    symbol_table.append(token)
                             current_token_start = idx
                             current_token_possible_ID = False
                             idx -= 1
@@ -108,6 +111,8 @@ if __name__ == "__main__":
                     line_tokens.append({token: "KEYWORD"})
                 else:
                     line_tokens.append({token: "ID"})
+                    if token not in symbol_table:
+                        symbol_table.append(token)
 
             elif current_token_possible_NUM:
                 token = line[current_token_start:line_length]
@@ -123,5 +128,11 @@ with open("tokens.txt", "w", encoding="utf-8", errors="ignore") as f:
             for k, v in token.items():
                 f.write(f"({v}, {k}) ")
         f.write("\n")
+
+with open("symbol_table.txt", "w", encoding="utf-8", errors="ignore") as f:
+    id_number = 0
+    for symbol in symbol_table:
+        id_number += 1
+        f.write(f"{id_number}.\t{symbol}\n")
 
         
