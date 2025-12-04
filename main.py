@@ -6,16 +6,32 @@ def is_WhiteSpace(ch: str) -> bool:
 
 
 def is_Symbol(ch: str) -> bool:
-    return (len(ch) == 1 and ch in ";:,[](){}+-*/=<>") or ch == "=="
+    return (len(ch) == 1 and ch in ";:,[](){}+-*/=<") or ch == "=="
 
 def is_Keyword(s: str) -> bool:
     keywords = ["if", "else", "void", "int", "for", "break", "return"]
     return s in keywords
 
+def token_Start_Checker(ch: str, look_ahead="") -> str:
+    if ch.isalpha() or ch == '_':
+        return "ID"
+    if ch.isdigit():
+        return "NUM"
+    if is_Symbol(ch):
+        return "SYMBOL"
+    if is_WhiteSpace(ch):
+        return "WHITESPACE"
+    if ch == "/" and look_ahead == "/":
+        return "LINE_COMMENT"
+    if ch == "/" and look_ahead == "*":
+        return "MULTI_LINE_COMMENT"
+    return "UNKNOWN"
+
 if __name__ == "__main__":
-    # Open file
     tokens = []
     symbol_table = ["if", "else", "void", "int", "for", "break", "return"]
+    lexical_errors = []
+
     with open("input.txt", "r", encoding="utf-8", errors="ignore") as f:
         lineno = 0
         multiple_line_comment_open = False
@@ -27,6 +43,7 @@ if __name__ == "__main__":
             current_line_comment_open = False
             current_token_possible_ID = False
             current_token_possible_NUM = False
+            current_active_error = None
             idx = -1
             while idx + 1 < line_length:
                 idx = idx + 1
@@ -46,6 +63,32 @@ if __name__ == "__main__":
                     continue
 
                 if idx == current_token_start:
+                    if token_Start_Checker(line[idx], look_ahead) == "UNKNOWN":
+                        if current_active_error is None:
+                            current_active_error = {
+                                "line": lineno,
+                                "start_idx": idx,
+                                "type": "Illegal character"
+                            }
+                        current_token_start += 1
+                        continue
+
+                    if line[idx] == '*' and look_ahead == '/':
+                        lexical_errors.append({
+                            "line": lineno,
+                            "start_idx": idx,
+                            "string": "*/",
+                            "type": "Stray closing comment"
+                        })
+                        current_token_start += 2
+                        idx += 1
+                        continue
+
+                    if current_active_error is not None:
+                        current_active_error["string"] = line[current_active_error["start_idx"]:idx]
+                        lexical_errors.append(current_active_error)
+                        current_active_error = None
+    
                     if line[idx] == '/' and look_ahead == '/':
                         current_line_comment_open = True
                         break
@@ -54,7 +97,6 @@ if __name__ == "__main__":
                         current_token_start = idx + 2
                         idx += 1
                         continue
-
 
                     if is_WhiteSpace(line[idx]):
                         current_token_start += 1
@@ -77,11 +119,26 @@ if __name__ == "__main__":
                     if line[idx].isdigit():
                         current_token_possible_NUM = True
                         continue
+
                 else:
                     if current_token_possible_ID:
                         if line[idx].isalnum() or line[idx] == '_':
                             continue
                         else:
+                            if token_Start_Checker(line[idx]) == "UNKNOWN":
+                                while idx < line_length and (token_Start_Checker(line[idx]) == "UNKNOWN" or token_Start_Checker(line[idx]) == "ID"):
+                                    idx += 1
+                                lexical_errors.append({
+                                    "line": lineno,
+                                    "start_idx": current_token_start,
+                                    "type": "Illegal character",
+                                    "string": line[current_token_start:idx]
+                                })
+                                current_token_start = idx
+                                current_token_possible_ID = False
+                                idx -= 1
+                                continue
+                                    
                             token = line[current_token_start:idx]
                             if is_Keyword(token):
                                 line_tokens.append({token: "KEYWORD"})
@@ -98,6 +155,30 @@ if __name__ == "__main__":
                         if line[idx].isdigit():
                             continue
                         else:
+                            if token_Start_Checker(line[idx]) == "UNKNOWN" or token_Start_Checker(line[idx]) == "ID":
+                                while idx < line_length and (token_Start_Checker(line[idx]) == "UNKNOWN" or token_Start_Checker(line[idx]) == "ID" or token_Start_Checker(line[idx]) == "NUM"):
+                                    idx += 1
+                                lexical_errors.append({
+                                    "line": lineno,
+                                    "start_idx": current_token_start,
+                                    "type": "Malformed number",
+                                    "string": line[current_token_start:idx]
+                                })
+                                current_token_start = idx
+                                current_token_possible_NUM = False
+                                idx -= 1
+                                continue
+                            if line[current_token_start] == '0' and idx - current_token_start > 1:
+                                lexical_errors.append({
+                                    "line": lineno,
+                                    "start_idx": current_token_start,
+                                    "type": "Malformed number",
+                                    "string": line[current_token_start:idx]
+                                })
+                                current_token_start = idx
+                                current_token_possible_NUM = False
+                                idx -= 1
+                                continue
                             token = line[current_token_start:idx]
                             line_tokens.append({token: "NUM"})
                             current_token_start = idx
@@ -135,4 +216,11 @@ with open("symbol_table.txt", "w", encoding="utf-8", errors="ignore") as f:
         id_number += 1
         f.write(f"{id_number}.\t{symbol}\n")
 
+with open("lexical_errors.txt", "w", encoding="utf-8", errors="ignore") as f:
+    if len(lexical_errors) == 0:
+        f.write("No lexical errors found.\n")
+    else:
+        for error in lexical_errors:
+            f.write(f"{error['line']}.\t({error['string']}, {error['type']})\n")
+        
         
