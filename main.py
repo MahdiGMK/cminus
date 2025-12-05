@@ -1,6 +1,7 @@
 from io import BufferedReader, TextIOWrapper
 from warnings import simplefilter
 
+
 def is_WhiteSpace(ch: str) -> bool:
     return len(ch) == 1 and ch in " \t\n\r\v\f"
 
@@ -91,7 +92,7 @@ if __name__ == "__main__":
                         current_active_error["string"] = line[current_active_error["start_idx"]:idx]
                         lexical_errors.append(current_active_error)
                         current_active_error = None
-    
+
                     if line[idx] == '/' and look_ahead == '/':
                         current_line_comment_open = True
                         break
@@ -141,7 +142,7 @@ if __name__ == "__main__":
                                 current_token_possible_ID = False
                                 idx -= 1
                                 continue
-                                    
+
                             token = line[current_token_start:idx]
                             if is_Keyword(token):
                                 line_tokens.append({token: "KEYWORD"})
@@ -200,7 +201,7 @@ if __name__ == "__main__":
 
             elif current_token_possible_NUM:
                 token = line[current_token_start:line_length]
-                line_tokens.append({token: "NUM"})            
+                line_tokens.append({token: "NUM"})
             tokens.append((lineno, line_tokens))
 
             if multiple_line_comment_open != None:
@@ -214,7 +215,7 @@ if multiple_line_comment_open != None:
         "type": "Open comment at EOF"
     })
     if len(multiple_line_comment_string) > 8:
-        lexical_errors[-1]["string"] = "/*" + multiple_line_comment_string[:4] + "..." 
+        lexical_errors[-1]["string"] = "/*" + multiple_line_comment_string[:7] + "..."
 
 
 with open("tokens.txt", "w", encoding="utf-8", errors="ignore") as f:
@@ -239,5 +240,3 @@ with open("lexical_errors.txt", "w", encoding="utf-8", errors="ignore") as f:
     else:
         for error in lexical_errors:
             f.write(f"{error['line']}.\t({error['string']}, {error['type']})\n")
-        
-        
