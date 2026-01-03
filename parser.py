@@ -33,11 +33,11 @@ for x in follow:
     assert len(x) == 26
 for x in predict:
     assert len(x) == 26
-assert len(first) == 47
-assert len(follow) == 47
-assert len(nts) == 46
-assert len(predict) == 84
-assert len(grammar) == 83
+assert len(first) == 48
+assert len(follow) == 48
+assert len(nts) == 47
+assert len(predict) == 86
+assert len(grammar) == 85
 assert predict[0] == follow[0]
 assert first[0] == follow[0]
 #

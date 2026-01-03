@@ -30,7 +30,7 @@ Expression-stmt   break ;
 Expression-stmt   ;
 Selection-stmt   if ( Expression ) Statement Else-Stmt
 Else-Stmt   else Statement
-Else-Stmt 
+Else-Stmt
 Iteration-stmt   for ( Expression ;  Expression ;  Expression ) Compound-stmt
 Return-stmt   return Return-stmt-prime
 Return-stmt-prime   Expression ;
