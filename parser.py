@@ -137,7 +137,12 @@ def parse():
                 # Output terminal
                 parent = stack.pop()
                 parent_node = node_stack.pop()
-                parent_node.label = f'({token.ty}, {token.str})'
+                if Scanner.is_Keyword(token.str):
+                    parent_node.label = f'(KEYWORD, {token.str})'
+                elif Scanner.is_Symbol(token.str):
+                    parent_node.label = f'(SYMBOL, {token.str})'
+                else:
+                    parent_node.label = f'({token.ty}, {token.str})'
                 token = getToken()
             else:
                 synError(f"#{current_line_no + 1} : syntax error, missing {top}\n")
