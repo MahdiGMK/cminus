@@ -42,7 +42,7 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
         current_token_start = idx + 1
         current_token_possible_ID = False
         current_token_possible_NUM = False
-        current_active_error = None        
+        current_active_error = None
 
         while idx < len(line):
             idx += 1
@@ -89,7 +89,7 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
                     with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
                         error_file.write(f"{current_active_error['line']}.\t({current_active_error['string']}, {current_active_error['type']})\n")
                     current_active_error = None
-                
+
                 if line[idx] == '/' and look_ahead == '/':
                     break
                 if line[idx] == '/' and look_ahead == '*':
@@ -107,7 +107,7 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
                 1
                 if is_Symbol(line[idx]):
                     return line[idx], idx + 1, line_no, line[idx]
-                
+
                 if line[idx].isalpha() or line[idx] == '_':
                     current_token_possible_ID = True
                     continue
@@ -136,7 +136,7 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
                             if token not in symbol_table:
                                 symbol_table.append(token)
                             return token, idx, line_no, "ID"
-                
+
                 if current_token_possible_NUM:
                     if line[idx].isdigit():
                         continue
@@ -171,7 +171,7 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
         elif current_token_possible_NUM:
             token = line[current_token_start:len(line)]
             return token, 0, line_no + 1, "NUM"
-        
+
         if multiple_line_comment_open != None:
             multiple_line_comment_string += "\n"
         line_no += 1
@@ -210,15 +210,15 @@ if __name__ == "__main__":
 
     while True:
         token, next_idx, next_line_no, token_type = get_next_token(input_lines, current_idx, current_line_no)
-                
+
         if token is None:
             break
-        
+
         # Store token grouped by line number
         if next_line_no not in line_tokens_dict:
             line_tokens_dict[next_line_no] = []
         line_tokens_dict[next_line_no].append({token: token_type})
-        
+
         current_idx = next_idx
         current_line_no = next_line_no
 
@@ -229,23 +229,23 @@ if __name__ == "__main__":
     # Check if any errors were written
     with open("lexical_errors.txt", "r", encoding="utf-8", errors="ignore") as f:
         error_content = f.read()
-    
+
     if not error_content.strip():
         with open("lexical_errors.txt", "w", encoding="utf-8", errors="ignore") as f:
             f.write("No lexical errors found.\n")
 
-with open("tokens.txt", "w", encoding="utf-8", errors="ignore") as f:
-    for lineno, line_tokens in tokens:
-        if len(line_tokens) == 0:
-            continue
-        f.write(f"{lineno}.\t")
-        for token in line_tokens:
-            for k, v in token.items():
-                f.write(f"({v}, {k}) ")
-        f.write("\n")
+    with open("tokens.txt", "w", encoding="utf-8", errors="ignore") as f:
+        for lineno, line_tokens in tokens:
+            if len(line_tokens) == 0:
+                continue
+            f.write(f"{lineno}.\t")
+            for token in line_tokens:
+                for k, v in token.items():
+                    f.write(f"({v}, {k}) ")
+            f.write("\n")
 
-with open("symbol_table.txt", "w", encoding="utf-8", errors="ignore") as f:
-    id_number = 0
-    for symbol in symbol_table:
-        id_number += 1
-        f.write(f"{id_number}.\t{symbol}\n")
+    with open("symbol_table.txt", "w", encoding="utf-8", errors="ignore") as f:
+        id_number = 0
+        for symbol in symbol_table:
+            id_number += 1
+            f.write(f"{id_number}.\t{symbol}\n")
