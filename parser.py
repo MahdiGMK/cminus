@@ -67,9 +67,15 @@ def parse():
                 stack.pop()
                 for x in reversed(replacement):
                     stack.append(x)
+            else:
+                print('sad')
         else:
             if top == token.ty:
                 print("happy")
+                if top == '':
+                    return
                 token = getToken()
                 stack.pop()
+            else:
+                print('sad')
 parse()
