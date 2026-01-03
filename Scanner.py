@@ -35,6 +35,7 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
 
     symbol_table = ["if", "else", "void", "int", "for", "break", "return"]
 
+    idx = 0
     while (line_no < len(input)):
         line = input[line_no]
 

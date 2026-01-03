@@ -65,6 +65,13 @@ def getToken():
     current_idx = next_idx
     current_line_no = next_line_no
     return tok
+
+
+with open('syntax_error.txt', 'w'): pass
+def synError(msg: str):
+    with open('syntax_error.txt', 'a') as f:
+        f.write(msg)
+
 def parse():
     stack = ['Program']
     token = getToken()
@@ -74,9 +81,8 @@ def parse():
         print(tktmap, end=" ")
         print(stack)
         r = 0
-        if (len(stack) == 0):
-            if (token.ty == None):
-                print("done")
+        if (token.ty == None):
+            if (len(stack) == 0):
                 return
 
         top = stack[-1]
@@ -92,16 +98,23 @@ def parse():
                 for x in reversed(replacement):
                     stack.append(x)
             else:
-                print('sad')
-                return
+                if follow[top+1][tktmap] == '+':
+                    synError(f"#{current_line_no + 1} : syntax error, missing {follow[top+1][0]}\n")
+                    stack.pop()
+                else:
+                    if token.ty == None:
+                        synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF\n")
+                        return
+                    synError(f"#{current_line_no + 1} : syntax error, illegal {token.ty}\n")
+                    token = getToken()
         else:
             if top == token.ty:
                 # print("happy")
                 token = getToken()
                 stack.pop()
             else:
-                print('sad')
-                return
+                synError(f"#{current_line_no + 1} : syntax error, missing {top}\n")
+                stack.pop()
 
 
 parse()

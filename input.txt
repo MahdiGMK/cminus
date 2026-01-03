@@ -1,16 +1,14 @@
-/* sample 2 */
+/* sample 3 */
 
-int add(int a, int b) {
-    return a + b;
+int fibonachi(int n){
+  if(n==1)
+     return 1;
+  if(n==2)
+     return 2;
+  return fibonachi(n) + fibonachi(n-1);
 }
 
 void main(void){
-    int a[30];
-    int b[50];
-    int c;
-
-    c = a[15];
-    int addres;
-    addres = add(3, 7);
-    b[49] = c + addres - a[0];
+	int result;
+        result = fibonachi(5);
 }
