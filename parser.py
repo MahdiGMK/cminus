@@ -87,6 +87,11 @@ def parse():
     node_stack = [root_node]
     token = getToken()
     while True:
+        if not stack:
+            while token.ty != None:
+                synError(f"#{current_line_no + 1} : syntax error, illegal {token.ty}\n")
+                token = getToken()
+            break
         tktmap = tmap[token.ty]
         r = 0
         if (token.ty == None):
