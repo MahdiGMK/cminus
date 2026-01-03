@@ -1,6 +1,6 @@
 Program   Declaration_list
 Declaration_list   Declaration Declaration_list
-Declaration_list   EPSILON
+Declaration_list
 Declaration   Declaration_initial Declaration_prime
 Declaration_initial   Type_specifier ID
 Declaration_prime   Fun_declaration_prime
@@ -13,13 +13,13 @@ Type_specifier   void
 Params   int ID Param_prime Param_list
 Params   void
 Param_list   , Param Param_list
-Param_list   EPSILON
+Param_list
 Param   Declaration_initial Param_prime
 Param_prime   [  ]
-Param_prime   EPSILON
+Param_prime
 Compound_stmt   { Declaration_list Statement_list }
 Statement_list   Statement Statement_list
-Statement_list   EPSILON
+Statement_list
 Statement   Expression_stmt
 Statement   Compound_stmt
 Statement   Selection_stmt
@@ -43,14 +43,14 @@ H   G D C
 Simple_expression_zegond   Additive_expression_zegond C
 Simple_expression_prime   Additive_expression_prime C
 C   Relop Additive_expression
-C   EPSILON
+C
 Relop   ==
 Relop   <
 Additive_expression   Term D
 Additive_expression_prime   Term_prime D
 Additive_expression_zegond   Term_zegond D
 D   Addop Term D
-D   EPSILON
+D
 Addop   +
 Addop   -
 Term   Signed_factor G
@@ -58,7 +58,7 @@ Term_prime   Factor_prime G
 Term_zegond   Signed_factor_zegond G
 G   * Signed_factor G
 G   / Signed_factor G
-G   EPSILON
+G
 Signed_factor   + Factor
 Signed_factor   - Factor
 Signed_factor   Factor
@@ -71,13 +71,13 @@ Factor   NUM
 Var_call_prime   ( Args )
 Var_call_prime   Var_prime
 Var_prime   [ Expression ]
-Var_prime   EPSILON
+Var_prime
 Factor_prime   ( Args )
-Factor_prime   EPSILON
+Factor_prime
 Factor_zegond   ( Expression )
 Factor_zegond   NUM
 Args   Arg_list
-Args   EPSILON
+Args
 Arg_list   Expression Arg_list_prime
 Arg_list_prime   , Expression Arg_list_prime
-Arg_list_prime   EPSILON
+Arg_list_prime
