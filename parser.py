@@ -47,6 +47,7 @@ class ParseTreeNode:
     def __init__(self, label):
         self.label = label
         self.children = []
+        self.unexpected_eof = False
     def add_child(self, child):
         self.children.append(child)
 
@@ -123,6 +124,7 @@ def parse():
                     break
             if not all_epsilon:
                 synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF\n")
+                root_node.unexpected_eof = True
             break
 
         top = stack[-1].label if isinstance(stack[-1], ParseTreeNode) else stack[-1]
@@ -160,6 +162,7 @@ def parse():
                         parent = stack.pop()
                         parent_node = node_stack.pop()
                         error_node = ParseTreeNode("Unexpected EOF")
+                        root_node.unexpected_eof = True
                         parent_node.add_child(error_node)
                         # Any remaining nonterminals go to epsilon
                         while len(stack) > 0:
@@ -225,7 +228,8 @@ def print_parse_tree(node, prefix="", is_last=True, ancestors_last=None, output_
 
 def save_parse_tree():
     root = parse()
-    root.add_child(ParseTreeNode('$'))
+    if not root.unexpected_eof:
+        root.add_child(ParseTreeNode('$'))
     if root:
         lines = print_parse_tree(root, prefix="", is_last=True)
         # Remove the first connector for the root
