@@ -103,10 +103,10 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
                     continue
 
                 if idx + 1 < len(line) and is_Symbol(line[idx:idx + 2]):
-                    return line[idx:idx + 2], idx + 2, line_no, "SYMBOL"
-                
+                    return line[idx:idx + 2], idx + 2, line_no, line[idx:idx + 2]
+                1
                 if is_Symbol(line[idx]):
-                    return line[idx], idx + 1, line_no, "SYMBOL"
+                    return line[idx], idx + 1, line_no, line[idx]
                 
                 if line[idx].isalpha() or line[idx] == '_':
                     current_token_possible_ID = True
@@ -131,7 +131,7 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
 
                         token = line[current_token_start:idx]
                         if is_Keyword(token):
-                            return token, idx, line_no, "KEYWORD"
+                            return token, idx, line_no, token
                         else:
                             if token not in symbol_table:
                                 symbol_table.append(token)
@@ -163,7 +163,7 @@ def get_next_token(input: list, start_idx: int, start_line_no: int):
         if current_token_possible_ID:
             token = line[current_token_start:len(line)]
             if is_Keyword(token):
-                return token, 0, line_no + 1, "KEYWORD"
+                return token, 0, line_no + 1, token
             else:
                 if token not in symbol_table:
                     symbol_table.append(token)
