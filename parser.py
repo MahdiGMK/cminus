@@ -150,11 +150,9 @@ def parse():
             else:
                 if follow[top_idx+1][tktmap] == '+':
                     synError(f"#{current_line_no + 1} : syntax error, missing {follow[top_idx+1][0]}\n")
-                    # Insert a missing node to the tree for error recovery
+                    # Remove: do not add missing node to the tree
                     parent = stack.pop()
                     parent_node = node_stack.pop()
-                    error_node = ParseTreeNode(f"missing {follow[top_idx+1][0]}")
-                    parent_node.add_child(error_node)
                 else:
                     if token.ty == None:
                         synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF\n")
@@ -187,33 +185,40 @@ def parse():
                 token = getToken()
             else:
                 synError(f"#{current_line_no + 1} : syntax error, missing {top}\n")
-                # Insert a missing node to the tree for error recovery
+                # Remove: do not add missing node to the tree
                 parent = stack.pop()
                 parent_node = node_stack.pop()
-                error_node = ParseTreeNode(f"missing {top}")
-                parent_node.add_child(error_node)
     # If no errors write no errors in the file
     if open('syntax_error.txt', 'r').read() == '':
         with open('syntax_error.txt', 'w') as f:
             f.write("No syntax errors found.\n")
     return root_node
 
+
+def is_nonterminal(label):
+    return label in ntmap
 # Recursively print the tree with ASCII art to a list of lines
 def print_parse_tree(node, prefix="", is_last=True, ancestors_last=None, output_lines=None):
     if output_lines is None:
         output_lines = []
     if ancestors_last is None:
         ancestors_last = []
+    # Prepare children to print, skipping nonterminals with no children
+    printable_children = [c for c in node.children if not (is_nonterminal(c.label) and len(c.children) == 0)]
+
     line = ""
-    # Add leading vertical bars for all ancestor levels except the last
-    for is_ancestor_last in ancestors_last[:-1]:
-        line += "│   " if not is_ancestor_last else "    "
+    for idx, is_ancestor_last in enumerate(ancestors_last[:-1]):
+        # If the next printed child is the last, don't print vertical bar below
+        if is_ancestor_last and idx == len(ancestors_last[:-1]) - 1:
+            line += "    "
+        else:
+            line += "│   " if not is_ancestor_last else "    "
     if ancestors_last:
         line += "└── " if ancestors_last[-1] else "├── "
     line += node.label
     output_lines.append(line)
-    n = len(node.children)
-    for i, child in enumerate(node.children):
+    n = len(printable_children)
+    for i, child in enumerate(printable_children):
         is_last_child = (i == n - 1)
         print_parse_tree(child, prefix, is_last_child, ancestors_last + [is_last_child], output_lines)
     return output_lines
