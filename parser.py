@@ -42,6 +42,14 @@ assert predict[0] == follow[0]
 assert first[0] == follow[0]
 #
 
+
+class ParseTreeNode:
+    def __init__(self, label):
+        self.label = label
+        self.children = []
+    def add_child(self, child):
+        self.children.append(child)
+
 class ParserToken:
     def __init__(self, line, index, str, ty) -> None:
         self.line = line
@@ -72,49 +80,108 @@ def synError(msg: str):
     with open('syntax_error.txt', 'a') as f:
         f.write(msg)
 
+
 def parse():
-    stack = ['Program']
+    root_node = ParseTreeNode('Program')
+    stack = [root_node]
+    node_stack = [root_node]
     token = getToken()
     while True:
-        print(token.ty, end=" ")
         tktmap = tmap[token.ty]
-        print(tktmap, end=" ")
-        print(stack)
         r = 0
         if (token.ty == None):
             if (len(stack) == 0):
-                return
+                break
 
-        top = stack[-1]
+        top = stack[-1].label if isinstance(stack[-1], ParseTreeNode) else stack[-1]
         if (top in ntmap):
-            top = ntmap[top]
-            for r in ntrows[top]:
+            top_idx = ntmap[top]
+            for r in ntrows[top_idx]:
                 if predict[r + 1][tktmap] == '+':
                     break
             if predict[r + 1][tktmap] == '+':
-                # print('happy')
                 replacement = grammar[r][1:]
-                stack.pop()
-                for x in reversed(replacement):
-                    stack.append(x)
+                parent = stack.pop()
+                parent_node = node_stack.pop()
+                # Add children nodes for this expansion
+                children_nodes = [ParseTreeNode(sym) for sym in replacement]
+                for child in children_nodes:
+                    parent_node.add_child(child)
+                for child in reversed(children_nodes):
+                    stack.append(child)
+                    node_stack.append(child)
             else:
-                if follow[top+1][tktmap] == '+':
-                    synError(f"#{current_line_no + 1} : syntax error, missing {follow[top+1][0]}\n")
-                    stack.pop()
+                if follow[top_idx+1][tktmap] == '+':
+                    synError(f"#{current_line_no + 1} : syntax error, missing {follow[top_idx+1][0]}\n")
+                    # Insert a missing node to the tree for error recovery
+                    parent = stack.pop()
+                    parent_node = node_stack.pop()
+                    error_node = ParseTreeNode(f"missing {follow[top_idx+1][0]}")
+                    parent_node.add_child(error_node)
                 else:
                     if token.ty == None:
                         synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF\n")
-                        return
+                        # Insert an error node and break
+                        parent = stack.pop()
+                        parent_node = node_stack.pop()
+                        error_node = ParseTreeNode("Unexpected EOF")
+                        parent_node.add_child(error_node)
+                        break
                     synError(f"#{current_line_no + 1} : syntax error, illegal {token.ty}\n")
+                    # Insert an illegal token node and continue
+                    error_node = ParseTreeNode(f"illegal {token.ty}")
+                    node_stack[-1].add_child(error_node)
                     token = getToken()
         else:
             if top == token.ty:
-                # print("happy")
+                # Output terminal
+                parent = stack.pop()
+                parent_node = node_stack.pop()
+                parent_node.label = f'({token.ty}, {token.str})'
                 token = getToken()
-                stack.pop()
             else:
                 synError(f"#{current_line_no + 1} : syntax error, missing {top}\n")
-                stack.pop()
+                # Insert a missing node to the tree for error recovery
+                parent = stack.pop()
+                parent_node = node_stack.pop()
+                error_node = ParseTreeNode(f"missing {top}")
+                parent_node.add_child(error_node)
+    # If no errors write no errors in the file
+    if open('syntax_error.txt', 'r').read() == '':
+        with open('syntax_error.txt', 'w') as f:
+            f.write("No syntax errors found.\n")
+    return root_node
 
+# Recursively print the tree with ASCII art to a list of lines
+def print_parse_tree(node, prefix="", is_last=True, ancestors_last=None, output_lines=None):
+    if output_lines is None:
+        output_lines = []
+    if ancestors_last is None:
+        ancestors_last = []
+    line = ""
+    # Add leading vertical bars for all ancestor levels except the last
+    for is_ancestor_last in ancestors_last[:-1]:
+        line += "│   " if not is_ancestor_last else "    "
+    if ancestors_last:
+        line += "└── " if ancestors_last[-1] else "├── "
+    line += node.label
+    output_lines.append(line)
+    n = len(node.children)
+    for i, child in enumerate(node.children):
+        is_last_child = (i == n - 1)
+        print_parse_tree(child, prefix, is_last_child, ancestors_last + [is_last_child], output_lines)
+    return output_lines
 
-parse()
+def save_parse_tree():
+    root = parse()
+    root.add_child(ParseTreeNode('$'))
+    if root:
+        lines = print_parse_tree(root, prefix="", is_last=True)
+        # Remove the first connector for the root
+        if lines:
+            lines[0] = lines[0].replace("└── ", "", 1)
+        with open('parse_tree.txt', 'w', encoding='utf-8') as f:
+            for line in lines:
+                f.write(line + '\n')
+
+save_parse_tree()
