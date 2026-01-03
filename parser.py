@@ -90,8 +90,13 @@ def parse():
         tktmap = tmap[token.ty]
         r = 0
         if (token.ty == None):
-            if (len(stack) == 0):
-                break
+            # If stack still has nonterminals, they go to epsilon
+            while len(stack) > 0:
+                parent = stack.pop()
+                parent_node = node_stack.pop()
+                epsilon_node = ParseTreeNode('epsilon')
+                parent_node.add_child(epsilon_node)
+            break
 
         top = stack[-1].label if isinstance(stack[-1], ParseTreeNode) else stack[-1]
         if (top in ntmap):
@@ -103,13 +108,18 @@ def parse():
                 replacement = grammar[r][1:]
                 parent = stack.pop()
                 parent_node = node_stack.pop()
-                # Add children nodes for this expansion
-                children_nodes = [ParseTreeNode(sym) for sym in replacement]
-                for child in children_nodes:
-                    parent_node.add_child(child)
-                for child in reversed(children_nodes):
-                    stack.append(child)
-                    node_stack.append(child)
+                # If the production is epsilon (either ['epsilon'] or []), add an 'epsilon' node
+                if (len(replacement) == 1 and replacement[0] == 'epsilon') or len(replacement) == 0:
+                    epsilon_node = ParseTreeNode('epsilon')
+                    parent_node.add_child(epsilon_node)
+                else:
+                    # Add children nodes for this expansion
+                    children_nodes = [ParseTreeNode(sym) for sym in replacement]
+                    for child in children_nodes:
+                        parent_node.add_child(child)
+                    for child in reversed(children_nodes):
+                        stack.append(child)
+                        node_stack.append(child)
             else:
                 if follow[top_idx+1][tktmap] == '+':
                     synError(f"#{current_line_no + 1} : syntax error, missing {follow[top_idx+1][0]}\n")
@@ -126,6 +136,12 @@ def parse():
                         parent_node = node_stack.pop()
                         error_node = ParseTreeNode("Unexpected EOF")
                         parent_node.add_child(error_node)
+                        # Any remaining nonterminals go to epsilon
+                        while len(stack) > 0:
+                            parent = stack.pop()
+                            parent_node = node_stack.pop()
+                            epsilon_node = ParseTreeNode('epsilon')
+                            parent_node.add_child(epsilon_node)
                         break
                     synError(f"#{current_line_no + 1} : syntax error, illegal {token.ty}\n")
                     # Insert an illegal token node and continue
