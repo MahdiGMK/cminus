@@ -96,13 +96,12 @@ def parse():
         tktmap = tmap[token.ty]
         r = 0
         if (token.ty == None):
-            # If stack still has nonterminals, they go to epsilon if possible
+            # Check if all nonterminals in stack can go to epsilon
             all_epsilon = True
             temp_stack = stack.copy()
             for s in temp_stack:
                 label = s.label if isinstance(s, ParseTreeNode) else s
                 if label in ntmap:
-                    # Check if this nonterminal can go to epsilon
                     nt_idx = ntmap[label]
                     can_epsilon = False
                     for rid in ntrows[nt_idx]:
@@ -110,19 +109,26 @@ def parse():
                         if (len(prod) == 1 and prod[0] == 'epsilon') or len(prod) == 0:
                             can_epsilon = True
                             break
-                    if can_epsilon:
-                        parent = stack.pop()
-                        parent_node = node_stack.pop()
-                        epsilon_node = ParseTreeNode('epsilon')
-                        parent_node.add_child(epsilon_node)
-                    else:
+                    if not can_epsilon:
                         all_epsilon = False
                         break
                 else:
                     # If it's a terminal, can't go to epsilon
                     all_epsilon = False
                     break
-            if not all_epsilon:
+            if all_epsilon:
+                # Only change all nonterminals to epsilons if all can be changed
+                while stack:
+                    label = stack[-1].label if isinstance(stack[-1], ParseTreeNode) else stack[-1]
+                    if label in ntmap:
+                        parent = stack.pop()
+                        parent_node = node_stack.pop()
+                        epsilon_node = ParseTreeNode('epsilon')
+                        parent_node.add_child(epsilon_node)
+                    else:
+                        break
+            else:
+                # Do not change any nonterminals
                 synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF\n")
                 root_node.unexpected_eof = True
             break
