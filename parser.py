@@ -206,24 +206,45 @@ def print_parse_tree(node, prefix="", is_last=True, ancestors_last=None, output_
         output_lines = []
     if ancestors_last is None:
         ancestors_last = []
-    # Prepare children to print, skipping nonterminals with no children
-    printable_children = [c for c in node.children if not (is_nonterminal(c.label) and len(c.children) == 0)]
+    # First, recursively process children and collect their lines
+    # Recursively process children and collect their lines
+    child_lines = []
+    for child in node.children:
+        lines = print_parse_tree(child, prefix, True, ancestors_last, [])
+        if lines:
+            child_lines.append((child, lines))
 
+    # Remove children who have no child (unless token/epsilon/$)
+    filtered_children = []
+    for child, lines in child_lines:
+        if len(child.children) == 0 and not (child.label.startswith('(') or child.label in ['epsilon', '$']):
+            continue
+        filtered_children.append((child, lines))
+
+    if len(filtered_children) == 0 and not (node.label.startswith('(') or node.label in ['epsilon', '$']):
+        return output_lines
+
+    # Build this node's line
     line = ""
-    for idx, is_ancestor_last in enumerate(ancestors_last[:-1]):
-        # If the next printed child is the last, don't print vertical bar below
-        if is_ancestor_last and idx == len(ancestors_last[:-1]) - 1:
-            line += "    "
-        else:
-            line += "│   " if not is_ancestor_last else "    "
+    for is_ancestor_last in ancestors_last[:-1]:
+        line += "│   " if not is_ancestor_last else "    "
     if ancestors_last:
         line += "└── " if ancestors_last[-1] else "├── "
     line += node.label
     output_lines.append(line)
-    n = len(printable_children)
-    for i, child in enumerate(printable_children):
+
+    n = len(filtered_children)
+    for i, (child, lines) in enumerate(filtered_children):
         is_last_child = (i == n - 1)
-        print_parse_tree(child, prefix, is_last_child, ancestors_last + [is_last_child], output_lines)
+        for j, cline in enumerate(lines):
+            child_prefix = ""
+            for is_ancestor_last in ancestors_last:
+                child_prefix += "│   " if not is_ancestor_last else "    "
+            if j == 0:
+                child_prefix += "└── " if is_last_child else "├── "
+            else:
+                child_prefix += "│   " if not is_last_child else "    "
+            output_lines.append(child_prefix + cline)
     return output_lines
 
 def save_parse_tree():
