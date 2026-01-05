@@ -1,22 +1,20 @@
-from io import BufferedReader, TextIOWrapper
-from warnings import simplefilter
+# Mahdi Bahramian
+# 401171593
+# Radin Jarireh
+# 402111142
 
 
-@staticmethod
 def is_WhiteSpace(ch: str) -> bool:
     return len(ch) == 1 and ch in " \t\n\r\v\f"
 
 
-@staticmethod
 def is_Symbol(ch: str) -> bool:
     return (len(ch) == 1 and ch in ";:,[](){}+-*/=<") or ch == "=="
 
-@staticmethod
 def is_Keyword(s: str) -> bool:
     keywords = ["if", "else", "void", "int", "for", "break", "return"]
     return s in keywords
 
-@staticmethod
 def token_Start_Checker(ch: str, look_ahead="") -> str:
     if ch.isalpha() or ch == '_':
         return "ID"
@@ -84,8 +82,8 @@ class Scanner:
                         continue
 
                     if line[idx] == '*' and look_ahead == '/':
-                        with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
-                            error_file.write(f"{line_no}.\t(*/, Stray closing comment)\n")
+                        # with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
+                        #     error_file.write(f"{line_no}.\t(*/, Stray closing comment)\n")
 
                         current_token_start += 2
                         idx += 1
@@ -93,8 +91,8 @@ class Scanner:
 
                     if current_active_error is not None:
                         current_active_error["string"] = line[current_active_error["start_idx"]:idx]
-                        with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
-                            error_file.write(f"{current_active_error['line']}.\t({current_active_error['string']}, {current_active_error['type']})\n")
+                        # with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
+                        #     error_file.write(f"{current_active_error['line']}.\t({current_active_error['string']}, {current_active_error['type']})\n")
                         current_active_error = None
 
                     if line[idx] == '/' and look_ahead == '/':
@@ -129,8 +127,8 @@ class Scanner:
                             if token_Start_Checker(line[idx]) == "UNKNOWN":
                                 while idx < len(line) and (token_Start_Checker(line[idx]) == "UNKNOWN" or token_Start_Checker(line[idx]) == "ID"):
                                     idx += 1
-                                with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
-                                    error_file.write(f"{line_no}.\t({line[current_token_start:idx]}, Illegal character)\n")
+                                # with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
+                                #     error_file.write(f"{line_no}.\t({line[current_token_start:idx]}, Illegal character)\n")
                                 current_token_start = idx
                                 current_token_possible_ID = False
                                 idx -= 1
@@ -151,15 +149,15 @@ class Scanner:
                             if token_Start_Checker(line[idx]) == "UNKNOWN" or token_Start_Checker(line[idx]) == "ID":
                                 while idx < len(line) and (token_Start_Checker(line[idx]) == "UNKNOWN" or token_Start_Checker(line[idx]) == "ID" or token_Start_Checker(line[idx]) == "NUM"):
                                     idx += 1
-                                with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
-                                    error_file.write(f"{line_no}.\t({line[current_token_start:idx]}, Malformed number)\n")
+                                # with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
+                                #     error_file.write(f"{line_no}.\t({line[current_token_start:idx]}, Malformed number)\n")
                                 current_token_start = idx
                                 current_token_possible_NUM = False
                                 idx -= 1
                                 continue
                             if line[current_token_start] == '0' and idx - current_token_start > 1:
-                                with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
-                                    error_file.write(f"{line_no}.\t({line[current_token_start:idx]}, Malformed number)\n")
+                                # with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
+                                #     error_file.write(f"{line_no}.\t({line[current_token_start:idx]}, Malformed number)\n")
                                 current_token_start = idx
                                 current_token_possible_NUM = False
                                 idx -= 1
@@ -193,8 +191,8 @@ class Scanner:
             }
             if len(multiple_line_comment_string) > 8:
                 error["string"] = "/*" + multiple_line_comment_string[:7] + "..."
-            with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
-                error_file.write(f"{error['line']}.\t({error['string']}, {error['type']})\n")
+            # with open("lexical_errors.txt", "a", encoding="utf-8", errors="ignore") as error_file:
+            #     error_file.write(f"{error['line']}.\t({error['string']}, {error['type']})\n")
         return None, idx, line_no, None
 
 
@@ -550,10 +548,16 @@ def getToken():
     return tok
 
 
-with open('syntax_error.txt', 'w'): pass
+with open('syntax_errors.txt', 'w'): pass
+errctr = 0
 def synError(msg: str):
-    with open('syntax_error.txt', 'a') as f:
-        f.write(msg)
+    global errctr
+    with open('syntax_errors.txt', 'a') as f:
+        if errctr == 0:
+            f.write(msg)
+        else:
+            f.write('\n' + msg)
+    errctr += 1
 
 
 def parse():
@@ -564,7 +568,7 @@ def parse():
     while True:
         if not stack:
             while token.ty != None:
-                synError(f"#{current_line_no + 1} : syntax error, illegal {token.ty}\n")
+                synError(f"#{current_line_no + 1} : syntax error, illegal {token.ty}")
                 token = getToken()
             break
         tktmap = tmap[token.ty]
@@ -603,7 +607,7 @@ def parse():
                         break
             else:
                 # Do not change any nonterminals
-                synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF\n")
+                synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF")
                 root_node.unexpected_eof = True
             break
 
@@ -631,13 +635,13 @@ def parse():
                         node_stack.append(child)
             else:
                 if follow[top_idx+1][tktmap] == '+':
-                    synError(f"#{current_line_no + 1} : syntax error, missing {follow[top_idx+1][0]}\n")
+                    synError(f"#{current_line_no + 1} : syntax error, missing {follow[top_idx+1][0]}")
                     # Remove: do not add missing node to the tree
                     parent = stack.pop()
                     parent_node = node_stack.pop()
                 else:
                     if token.ty == None:
-                        synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF\n")
+                        synError(f"#{current_line_no + 1} : syntax error, Unexpected EOF")
                         # Insert an error node and break
                         parent = stack.pop()
                         parent_node = node_stack.pop()
@@ -651,7 +655,7 @@ def parse():
                             epsilon_node = ParseTreeNode('epsilon')
                             parent_node.add_child(epsilon_node)
                         break
-                    synError(f"#{current_line_no + 1} : syntax error, illegal {token.ty}\n")
+                    synError(f"#{current_line_no + 1} : syntax error, illegal {token.ty}")
                     # Do not add illegal node to the parse tree, just skip the token
                     token = getToken()
         else:
@@ -667,14 +671,14 @@ def parse():
                     parent_node.label = f'({token.ty}, {token.str})'
                 token = getToken()
             else:
-                synError(f"#{current_line_no + 1} : syntax error, missing {top}\n")
+                synError(f"#{current_line_no + 1} : syntax error, missing {top}")
                 # Remove: do not add missing node to the tree
                 parent = stack.pop()
                 parent_node = node_stack.pop()
     # If no errors write no errors in the file
-    if open('syntax_error.txt', 'r').read() == '':
-        with open('syntax_error.txt', 'w') as f:
-            f.write("No syntax errors found.\n")
+    if open('syntax_errors.txt', 'r').read() == '':
+        with open('syntax_errors.txt', 'w') as f:
+            f.write("No syntax errors found.")
     return root_node
 
 
@@ -737,7 +741,11 @@ def save_parse_tree():
         if lines:
             lines[0] = lines[0].replace("└── ", "", 1)
         with open('parse_tree.txt', 'w', encoding='utf-8') as f:
-            for line in lines:
-                f.write(line + '\n')
+            for i in range(len(lines)):
+                line = lines[i]
+                if i == 0:
+                    f.write(line)
+                else:
+                    f.write('\n' + line)
 
 save_parse_tree()
